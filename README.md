@@ -3,7 +3,7 @@
 Community-scale infrastructure for hosting local meetups and workshops.
 
 <p align="center">
-	<a href="https://hunterirving.github.io/events"><img src="readme_images/screenshot.jpg" width=170>
+	<a href="https://hunterirving.github.io/events"><img src="readme_images/screenshot.jpg" width=200>
 	</a>
 </p>
 
@@ -21,5 +21,5 @@ This project is licensed under the <a href="LICENSE">GNU General Public License 
 
 ### third-party resources
 
-- **[Leaflet](https://leafletjs.com)** 1.9.4 under the <a href="resources/leaflet/LICENSE-leaflet">BSD 2-Clause License</a>.
-- **[Leaflet.TileLayer.NoGap](https://github.com/Leaflet/Leaflet.TileLayer.NoGap)** (modified), under the [Beerware License](resources/leaflet/LICENSE-nogap).
+- **[Leaflet](https://leafletjs.com)** 1.9.4 under the <a href="resources/leaflet/LICENSE-leaflet">BSD 2-Clause License</a>
+- **[Leaflet.TileLayer.NoGap](https://github.com/Leaflet/Leaflet.TileLayer.NoGap)** (modified), under the [Beerware License](resources/leaflet/LICENSE-nogap)
