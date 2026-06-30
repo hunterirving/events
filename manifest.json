@@ -1,0 +1,19 @@
+{
+	"id": "./",
+	"name": "events",
+	"short_name": "events",
+	"description": "events",
+	"start_url": "./",
+	"scope": "./",
+	"display": "standalone",
+	"background_color": "antiquewhite",
+	"theme_color": "antiquewhite",
+	"icons": [
+		{
+			"src": "resources/icon.png",
+			"sizes": "1024x1024",
+			"type": "image/png",
+			"purpose": "any maskable"
+		}
+	]
+}

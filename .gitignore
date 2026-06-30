@@ -1,0 +1,10 @@
+# Local HTTPS dev certs
+/.https_certs/
+
+# Actual event data; demo.json is the committed fallback
+/resources/events.json
+
+# Python
+__pycache__/
+*.pyc
+venv/
