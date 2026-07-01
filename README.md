@@ -2,12 +2,12 @@
 
 community-scale infrastructure for local meetups and workshops.<br><br>
 
-<p align="center">
+<h3 align="center">
 	<a href="https://hunterirving.github.io/events"><img src="readme_images/screenshot.jpg" width=235>
 	</a>
-</p>
-
-<h3 align="center"><a href="https://hunterirving.github.io/events">demo</a><br><br></h3>
+	<br><br>
+	<a href="https://hunterirving.github.io/events">demo</a><br><br>
+</h3>
 
 ## features
 - auto-generated printable flyers
@@ -25,9 +25,7 @@ this project is licensed under the <a href="LICENSE">GNU General Public License 
 
 the following third-party resources are included in this repo:
 
-| resource | license |
-| --- | --- |
-| **[Leaflet](https://leafletjs.com)** 1.9.4 | <a href="resources/leaflet/LICENSE-leaflet">BSD 2-Clause License</a> |
-| **[Leaflet.TileLayer.NoGap](https://github.com/Leaflet/Leaflet.TileLayer.NoGap)** (modified) | [Beerware License](resources/leaflet/LICENSE-nogap) |
+- **[Leaflet](https://leafletjs.com)** 1.9.4, <a href="resources/leaflet/LICENSE-leaflet">BSD 2-Clause License</a>
+- **[Leaflet.TileLayer.NoGap](https://github.com/Leaflet/Leaflet.TileLayer.NoGap)** (modified), [Beerware License](resources/leaflet/LICENSE-nogap)
 
-<h3 align="center"><a href="https://hunterirving.github.io/events">🐛</a><br><br></h3>
+<h3 align="center">🐛<br><br></h3>
