@@ -1,25 +1,33 @@
 # /events 🐞
 
-Community-scale infrastructure for hosting local meetups and workshops.
+community-scale infrastructure for local meetups and workshops.<br><br>
 
 <p align="center">
-	<a href="https://hunterirving.github.io/events"><img src="readme_images/screenshot.jpg" width=200>
+	<a href="https://hunterirving.github.io/events"><img src="readme_images/screenshot.jpg" width=235>
 	</a>
 </p>
 
-## key features
-- Auto-generated printable flyers
+<h3 align="center"><a href="https://hunterirving.github.io/events">demo</a><br><br></h3>
+
+## features
+- auto-generated printable flyers
 - RSVP by E-mail
-- Installable as a [Progressive Web App](https://hunterirving.github.io/web_workshop/pages/pwa) for offline use
+- installable as a [Progressive Web App](https://hunterirving.github.io/web_workshop/pages/pwa) for offline use
 
-## usage
-Add an `events.json` file to `/resources` to override the events in `demo.json`. Upcoming events will be displayed on the map. If no upcoming events are present, past events will be shown instead.
+## usage 🪲
+add an `events.json` file to `resources/` to override the events from `demo.json`.
+- upcoming events will be displayed on the map.
+- if no upcoming events are present, past events will be shown instead.
 
-## licenses
+## license
 
-This project is licensed under the <a href="LICENSE">GNU General Public License v3.0</a>.
+this project is licensed under the <a href="LICENSE">GNU General Public License v3.0</a>.
 
-### third-party resources
+the following third-party resources are included in this repo:
 
-- **[Leaflet](https://leafletjs.com)** 1.9.4 under the <a href="resources/leaflet/LICENSE-leaflet">BSD 2-Clause License</a>
-- **[Leaflet.TileLayer.NoGap](https://github.com/Leaflet/Leaflet.TileLayer.NoGap)** (modified), under the [Beerware License](resources/leaflet/LICENSE-nogap)
+| resource | license |
+| --- | --- |
+| **[Leaflet](https://leafletjs.com)** 1.9.4 | <a href="resources/leaflet/LICENSE-leaflet">BSD 2-Clause License</a> |
+| **[Leaflet.TileLayer.NoGap](https://github.com/Leaflet/Leaflet.TileLayer.NoGap)** (modified) | [Beerware License](resources/leaflet/LICENSE-nogap) |
+
+<h3 align="center"><a href="https://hunterirving.github.io/events">🐛</a><br><br></h3>
