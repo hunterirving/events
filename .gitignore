@@ -8,3 +8,9 @@
 __pycache__/
 *.pyc
 venv/
+
+# Editor
+.vscode/*
+
+# MacOS
+.DS_Store
