@@ -87,10 +87,10 @@
 			var d = fmt.parseLocal(m.start);
 			return L.divIcon({
 				className: "",
-				html: "<div class=\"event-pin\" style=\"background:" + m.color + "\">" +
+				html: "<a class=\"event-pin\" href=\"" + fmt.eventUrl(m) + "\" style=\"background:" + m.color + "\">" +
 					"<span class=\"pin-month\">" + fmt.MONTH_ABBR[d.getMonth()] + "</span>" +
 					"<span class=\"pin-day\">" + d.getDate() + "</span>" +
-					"</div>",
+					"</a>",
 				iconSize: [48, 48],
 				iconAnchor: [24, 24]
 			});
@@ -116,14 +116,18 @@
 		}
 
 		events.forEach(function (m, i) {
-			var marker = L.marker([m.latitude, m.longitude], { icon: makeIcon(m) }).addTo(map);
+			// keyboard:false so Leaflet doesn't add its own tabIndex/role to the icon root.
+			// the inner <a> is the focusable, Enter-activatable element (no double tab stop)
+			var marker = L.marker([m.latitude, m.longitude], { icon: makeIcon(m), keyboard: false }).addTo(map);
 			marker.setZIndexOffset((events.length - i) * Z_STEP);
 			m._marker = marker; // so selectEvent can reach this pin's DOM
-			marker.on("click", function () { selectMarker(m, true); });
-			// Leaflet gives focused markers tabIndex + role=button but only wires Enter for
-			// popups, so activate the pin ourselves (13 = Enter, matching Leaflet's own idiom)
-			marker.on("keypress", function (e) {
-				if (e.originalEvent.keyCode === 13) { selectMarker(m, true); }
+			marker.on("click", function (e) {
+				// modified clicks (new tab/window) fall through to the anchor's native nav;
+				// plain clicks + keyboard Enter select in-page instead of navigating
+				var oe = e.originalEvent;
+				if (oe.metaKey || oe.ctrlKey || oe.shiftKey || oe.altKey) { return; }
+				oe.preventDefault();
+				selectMarker(m, true);
 			});
 		});
 
