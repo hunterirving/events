@@ -181,8 +181,8 @@
 	}
 
 	// Build the intro's upcoming-events table and return the segments to type (one per
-	// cell). Rows are clickable. No events -> a single "No upcoming events." line. A flex
-	// list of <div>s (not a <table>) so columns collapse cleanly.
+	// cell). Rows are <a> deep links (clickable + keyboard/new-tab). No events -> a single
+	// "No upcoming events." line.
 	function buildIntroList() {
 		introListEl = null;
 		if (!introEvents.length) {
@@ -198,9 +198,15 @@
 
 		var segments = [];
 		introEvents.forEach(function (m) {
-			var row = document.createElement("div");
+			// a real link: shareable, focusable, works with keyboard / new-tab / middle-click
+			var row = document.createElement("a");
 			row.className = "intro-row";
-			row.addEventListener("click", function () {
+			row.href = fmt.eventUrl(m);
+			// native anchor activation: mouse click and keyboard Enter both fire click here.
+			// modified clicks (new tab/window, middle button) fall through to the browser.
+			row.addEventListener("click", function (e) {
+				if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) { return; }
+				e.preventDefault();
 				if (selectFromIntro) { selectFromIntro(m, true); }
 			});
 

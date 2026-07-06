@@ -27,7 +27,9 @@
 		return true;
 	}
 
-	// Rewrite the address bar to the event's deep link (no reload / history entry).
+	// Rewrite the address bar to the event's deep link (no reload / history entry), so the
+	// app keeps its single-page feel: Back leaves the app rather than showing the last
+	// event you viewed.
 	function syncUrl(m) {
 		if (window.history && history.replaceState) {
 			history.replaceState(null, "", fmt.eventUrl(m));
@@ -118,6 +120,11 @@
 			marker.setZIndexOffset((events.length - i) * Z_STEP);
 			m._marker = marker; // so selectEvent can reach this pin's DOM
 			marker.on("click", function () { selectMarker(m, true); });
+			// Leaflet gives focused markers tabIndex + role=button but only wires Enter for
+			// popups, so activate the pin ourselves (13 = Enter, matching Leaflet's own idiom)
+			marker.on("keypress", function (e) {
+				if (e.originalEvent.keyCode === 13) { selectMarker(m, true); }
+			});
 		});
 
 		window.panel.setIntroData(events, selectMarker, pastMode);

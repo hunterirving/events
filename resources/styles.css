@@ -102,6 +102,8 @@ html, body {
 	margin: 0 calc(-1 * var(--link-pad));
 	cursor: pointer;
 	-webkit-tap-highlight-color: transparent;
+	color: inherit;
+	text-decoration: none;
 }
 .intro-name {
 	grid-column: 1;
