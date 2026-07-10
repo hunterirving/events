@@ -392,6 +392,9 @@ html, body {
 	border-radius: 0;
 	transition: border-radius 150ms ease-in-out;
 }
+.leaflet-container a.event-pin {
+	-webkit-tap-highlight-color: transparent;
+}
 .event-pin:link, .event-pin:visited {
 	color: black;
 }
