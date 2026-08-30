@@ -1,9 +1,10 @@
 // Caches the app shell (so it works offline) and map tiles (so panning/zooming
-// reuses previously-viewed tiles instead of refetching). Leaflet is vendored in
+// reuses previously-viewed tiles instead of refetching). MapLibre is vendored in
 // the shell, so map tiles are the only remaining network dependency.
 
-const SHELL_CACHE = "app-shell-v8";
-const TILE_CACHE = "map-tiles-v1"; // CORS fetches so the cached responses aren't opaque
+const SHELL_CACHE = "app-shell-v9";
+const TILE_CACHE = "map-tiles-v2"; // CORS fetches so the cached responses aren't opaque
+const TILE_HOST = "tiles.openfreemap.org";
 const KEEP = new Set([SHELL_CACHE, TILE_CACHE]);
 
 // Every file the app needs to boot with no network.
@@ -21,10 +22,10 @@ const SHELL = [
 	"resources/app.js",
 	"resources/nav.js",
 	"resources/styles.css",
-	"resources/leaflet/leaflet-nogap.js",
 	"resources/demo.json",
-	"resources/leaflet/leaflet.js",
-	"resources/leaflet/leaflet.css",
+	"resources/basemap/style.json",
+	"resources/maplibre/maplibre-gl.js",
+	"resources/maplibre/maplibre-gl.css",
 ];
 
 // Real (gitignored) data; overrides demo.json when present, but often absent. Cached
@@ -53,9 +54,7 @@ self.addEventListener("activate", (e) => e.waitUntil(
 	])
 ));
 
-function isCacheableTile(url) {
-	return url.hostname.endsWith("basemaps.cartocdn.com"); // map tiles
-}
+const TILE_JSON_PATH = "/planet";
 
 // network-first for same-origin app files: fresh when online, cached when not,
 // so edits show up on reload but the app still boots offline.
@@ -67,6 +66,19 @@ async function shellResponse(request) {
 		return resp;
 	} catch {
 		const hit = await cache.match(request) || await cache.match("index.html");
+		if (hit) return hit;
+		throw new Error("offline and not cached");
+	}
+}
+
+async function tileJsonResponse(url) {
+	const cache = await caches.open(TILE_CACHE);
+	try {
+		const resp = await fetch(url.href, { mode: "cors", credentials: "omit" });
+		if (resp.ok) cache.put(url.href, resp.clone());
+		return resp;
+	} catch {
+		const hit = await cache.match(url.href);
 		if (hit) return hit;
 		throw new Error("offline and not cached");
 	}
@@ -86,8 +98,8 @@ self.addEventListener("fetch", (event) => {
 	if (event.request.method !== "GET") return;
 	const url = new URL(event.request.url);
 
-	if (isCacheableTile(url)) {
-		event.respondWith(tileResponse(url));
+	if (url.hostname === TILE_HOST) {
+		event.respondWith(url.pathname === TILE_JSON_PATH ? tileJsonResponse(url) : tileResponse(url));
 		return;
 	}
 	// same-origin navigations + assets -> app shell

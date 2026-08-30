@@ -1,7 +1,7 @@
 // Nav mode: tap the compass to request location + orientation, drop a marker at
 // the user's position, and follow them heading-up. Panning or pinch-rotating away
 // suspends following; after 3s of no interaction the ladybug eases back and follow
-// resumes. Touch only - script.js calls this from initMap once rotation is ready.
+// resumes. Touch only - map.js calls this from initMap once rotation is ready.
 
 (function () {
 	var LADYBUG = "🐞";
@@ -28,17 +28,14 @@
 		if (!("DeviceOrientationEvent" in window)) { return; }
 		compass.classList.add("compass-enabled");
 
-		// dedicated pane keeps the ladybug above every event square regardless of z math
-		map.createPane("ladybugPane").style.zIndex = 700;
-
-		// Pane for the location->event line, between tilePane (200) and markerPane (600).
-		// We position the line ourselves every frame (see renderLine), so it must NOT carry
-		// leaflet-zoom-animated, or Leaflet's zoom transform would fight our writes.
-		var linePane = map.createPane("linePane");
-		linePane.style.zIndex = 250;
+		// line sits under the event pins (which start at 1) and over the map
+		var linePane = document.createElement("div");
+		linePane.style.cssText = "position:absolute;top:0;left:0;z-index:0;pointer-events:none";
+		map.getCanvasContainer().appendChild(linePane);
 
 		var heading = 0;          // device heading in deg (0 = north)
-		var compassOn = false;    // heading-up follow mode
+		var compassOn = false;    // heading-up follow mode, engaged only once a fix lands
+		var navRequested = false; // orientation granted; nav engages when location delivers
 		var compassStarted = false;
 		var headingReady = false; // a real reading has arrived
 		var pendingEntry = false; // entered nav but waiting for first heading
@@ -48,15 +45,16 @@
 		var navAnim = null;
 		var rotAnimating = false;
 
-		var marker = null;        // Leaflet marker for the ladybug
+		var marker = null;        // MapLibre marker for the ladybug
 		var lastFix = null;       // { lat, lng, t } latest raw reading
 		var vel = { lat: 0, lng: 0 }; // deg/s, smoothed across fixes
 		var predictOn = false;
 		var watching = false;
+		var watchId = null;
 
 		// Line to the active event: a standalone SVG overlay. We reproject
-		// the two endpoints every frame via latLngToContainerPoint, so the
-		// line stays glued with constant 4px stroke.
+		// the two endpoints every frame via map.project, so the line stays
+		// glued with constant 4px stroke.
 		var DRAW_MS = 300;
 		var lineSvg = null;
 		var lineEl = null;
@@ -71,13 +69,26 @@
 			return { x: r.left + r.width / 2, y: r.top + r.height * FOLLOW_ANCHOR_Y };
 		}
 
+		var LADYBUG_Z = 1000000;
+
 		function makeIcon() {
-			return L.divIcon({
-				className: "",
-				html: "<div class=\"ladybug-pin\">" + LADYBUG + "</div>",
-				iconSize: [40, 40],
-				iconAnchor: [20, 20]
-			});
+			var el = document.createElement("div");
+			el.setAttribute("role", "presentation");
+			el.setAttribute("aria-label", "");
+			el.style.zIndex = LADYBUG_Z;
+			el.style.pointerEvents = "none";
+			el.innerHTML = "<div class=\"ladybug-pin\">" + LADYBUG + "</div>";
+			return el;
+		}
+
+		function distanceM(a, b) {
+			var R = 6371000;
+			var toRad = Math.PI / 180;
+			var dLat = (b.lat - a.lat) * toRad;
+			var dLng = (b.lng - a.lng) * toRad;
+			var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+				Math.cos(a.lat * toRad) * Math.cos(b.lat * toRad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+			return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 		}
 
 		// --- line to active event ---
@@ -109,16 +120,11 @@
 			if (lineSvg) { lineSvg.classList.remove("visible"); }
 		}
 
-		// linePane's local space is the map pane's space, offset from the container by the
-		// pane's live translation; subtract it to place a container point inside the pane.
 		// Grow the visible end from the ladybug toward the event over DRAW_MS.
 		function renderLine() {
 			if (!activeTarget || !marker || !lineEl) { return; }
-			var off = L.DomUtil.getPosition(map.getPane("mapPane")) || L.point(0, 0);
-			var ac = map.latLngToContainerPoint(marker.getLatLng());
-			var bc = map.latLngToContainerPoint(activeTarget.latlng);
-			var a = { x: ac.x - off.x, y: ac.y - off.y };
-			var b = { x: bc.x - off.x, y: bc.y - off.y };
+			var a = map.project(marker.getLngLat());
+			var b = map.project(activeTarget.latlng);
 			var p = Math.min(1, (performance.now() - drawStart) / DRAW_MS);
 			var e = p * p * (3 - 2 * p); // smoothstep
 			lineEl.setAttribute("x1", a.x);
@@ -128,16 +134,15 @@
 		}
 
 		// keeps the line glued during one-finger pan and the ladybug glide (both move the
-		// map outside Leaflet's zoom rAF)
+		// map outside MapLibre's own render loop)
 		function tickLine() {
 			if (!activeTarget || !marker) { clearLine(); return; }
 			renderLine();
 			lineRAF = requestAnimationFrame(tickLine);
 		}
 
-		// two-finger gestures move the map on Leaflet's own rAF; rendering on its move/zoom
-		// events puts the line in the same phase as the markers
-		map.on("move zoom", renderLine);
+		// rendering on move puts the line in the same phase as the markers
+		map.on("move", renderLine);
 
 		window.navLine = { setTarget: setLineTarget, clear: clearLine };
 
@@ -165,10 +170,10 @@
 			if (!following || !marker) { return; }
 			var a = followAnchorPoint();
 			var target = rotation.clientToStage(a.x, a.y);
-			var cur = map.latLngToContainerPoint(marker.getLatLng());
+			var cur = map.project(marker.getLngLat());
 			var dx = cur.x - target.x, dy = cur.y - target.y;
 			if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) { return; }
-			map.panBy([dx, dy], { animate: false });
+			map.panBy([dx, dy], { duration: 0 });
 		}
 
 		// Dead-reckon: extrapolate the last fix along its velocity and ease the rendered
@@ -186,12 +191,13 @@
 				var ahead = Math.min(now - lastFix.t, MAX_PREDICT_MS) / 1000;
 				var tLat = lastFix.lat + vel.lat * ahead;
 				var tLng = lastFix.lng + vel.lng * ahead;
-				var cur = marker.getLatLng();
+				var cur = marker.getLngLat();
 				var k = 1 - Math.exp(-dt / EASE_TAU_MS); // frame-rate independent
-				marker.setLatLng([cur.lat + (tLat - cur.lat) * k, cur.lng + (tLng - cur.lng) * k]);
+				marker.setLngLat([cur.lng + (tLng - cur.lng) * k, cur.lat + (tLat - cur.lat) * k]);
 				if (following) { pinToAnchor(); }
-				var z = map.getZoom();
-				var px = map.project(marker.getLatLng(), z).distanceTo(map.project(L.latLng(tLat, tLng), z));
+				var mp = map.project(marker.getLngLat());
+				var tp = map.project([tLng, tLat]);
+				var px = Math.hypot(mp.x - tp.x, mp.y - tp.y);
 				var still = Math.hypot(vel.lat, vel.lng) < 1e-7;
 				if (px <= 0.5 && (still || now - lastFix.t >= MAX_PREDICT_MS)) { predictOn = false; return; }
 				requestAnimationFrame(step);
@@ -316,8 +322,8 @@
 				rotation.setAngle(rotation.normalizeDeg(startAngle + dAngle * e));
 				var a = followAnchorPoint();
 				var target = rotation.clientToStage(a.x, a.y);
-				var cur = map.latLngToContainerPoint(marker.getLatLng());
-				map.panBy([(cur.x - target.x) * frac, (cur.y - target.y) * frac], { animate: false });
+				var cur = map.project(marker.getLngLat());
+				map.panBy([(cur.x - target.x) * frac, (cur.y - target.y) * frac], { duration: 0 });
 				navAnim = requestAnimationFrame(step);
 			};
 			navAnim = requestAnimationFrame(step);
@@ -372,31 +378,35 @@
 		function requestOrientationPermission() {
 			var DOE = window.DeviceOrientationEvent;
 			if (DOE && typeof DOE.requestPermission === "function") {
-				return DOE.requestPermission().then(function (s) { return s === "granted"; }).catch(function () { return false; });
+				return DOE.requestPermission()
+					.then(function (s) { return s === "granted" ? "granted" : "denied"; })
+					.catch(function () { return "nogesture"; });
 			}
-			return Promise.resolve(true);
+			return Promise.resolve("granted");
 		}
 
 		// --- location ---
 
-		map.on("locationfound", function (e) {
+		function onFix(latlng) {
 			var now = performance.now();
 			var firstFix = !marker;
 			if (firstFix) {
-				marker = L.marker(e.latlng, { icon: makeIcon(), interactive: false, pane: "ladybugPane" }).addTo(map);
+				var el = makeIcon();
+				marker = new maplibregl.Marker({ element: el, anchor: "center" })
+					.setLngLat([latlng.lng, latlng.lat]).addTo(map);
 				// fade in: add .visible next frame so the opacity transition runs from 0
-				var pin = marker._icon && marker._icon.querySelector(".ladybug-pin");
+				var pin = el.querySelector(".ladybug-pin");
 				if (pin) { requestAnimationFrame(function () { pin.classList.add("visible"); }); }
 				// event already selected before location came on: draw the line now
 				var active = window.getActiveEvent && window.getActiveEvent();
 				if (active) { setLineTarget(active.latlng, active.color); }
 			} else {
 				var dt = (now - lastFix.t) / 1000;
-				if (map.distance(e.latlng, marker.getLatLng()) >= SNAP_DIST_M) {
+				if (distanceM(latlng, marker.getLngLat()) >= SNAP_DIST_M) {
 					// huge jump (first good fix after a bad one): no glide across town
 					vel.lat = 0;
 					vel.lng = 0;
-					marker.setLatLng(e.latlng);
+					marker.setLngLat([latlng.lng, latlng.lat]);
 					if (following) { pinToAnchor(); }
 				} else if (dt >= 10) {
 					// stale gap: old velocity means nothing
@@ -405,46 +415,62 @@
 				} else if (dt > 0.05) {
 					// velocity from the last two fixes drives the dead-reckoner; blending
 					// damps jitter (sub-50ms bursts keep the running value)
-					vel.lat += ((e.latlng.lat - lastFix.lat) / dt - vel.lat) * VEL_SMOOTH;
-					vel.lng += ((e.latlng.lng - lastFix.lng) / dt - vel.lng) * VEL_SMOOTH;
+					vel.lat += ((latlng.lat - lastFix.lat) / dt - vel.lat) * VEL_SMOOTH;
+					vel.lng += ((latlng.lng - lastFix.lng) / dt - vel.lng) * VEL_SMOOTH;
 				}
 			}
-			lastFix = { lat: e.latlng.lat, lng: e.latlng.lng, t: now };
+			lastFix = { lat: latlng.lat, lng: latlng.lng, t: now };
 			if (!firstFix) { startPredict(); }
-			// first fix: ease from the current view to the anchored ladybug rather than
-			// hard-jumping. animateToAnchor pans relative to the marker, so just engaging
-			// it (once a heading is ready) gives the fly-in for free.
-			if (firstFix && compassOn) {
-				if (headingReady) { animateToAnchor(); }
-				else { pendingEntry = true; }
-			}
-		});
+			if (navRequested && !compassOn) { engageNav(); }
+		}
 
 		function startWatching() {
-			if (watching) { return; }
+			if (watching || !navigator.geolocation) { return; }
 			watching = true;
-			map.locate({ watch: true, enableHighAccuracy: true, maximumAge: 10000 });
+			watchId = navigator.geolocation.watchPosition(function (pos) {
+				onFix({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+			}, function (e) {
+				if (e.code === e.PERMISSION_DENIED) { stopWatching(); exitNav(); }
+			}, { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 });
+		}
+
+		function stopWatching() {
+			if (!watching) { return; }
+			watching = false;
+			if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+			if (marker) { marker.remove(); marker = null; lastFix = null; }
+			clearLine();
 		}
 
 		// --- compass tap (enter/exit nav mode) ---
+
+		function engageNav() {
+			compassOn = true;
+			compass.classList.remove("paused");
+			ringReset();
+			compass.classList.add("active");
+			// ease from the current view to the anchored ladybug rather than hard-jumping.
+			// animateToAnchor pans relative to the marker, so just engaging it (once a
+			// heading is ready) gives the fly-in for free.
+			if (headingReady) { animateToAnchor(); }
+			else { pendingEntry = true; }
+		}
+
 		function enterNav() {
-			requestOrientationPermission().then(function (ok) {
-				if (!ok) { return; } // orientation denied: stay off
+			requestOrientationPermission().then(function (state) {
+				if (state === "nogesture") { return; } // tap again for a live activation
+				if (state !== "granted") { exitNav(); return; }
+				navRequested = true;
 				startCompass();
 				startWatching();
-				compassOn = true;
-				compass.classList.remove("paused");
-				ringReset();
-				compass.classList.add("active");
-				// ease to anchor + rotate heading-up together; defer to the first reading
-				// if none yet, so it rotates too (not move-then-rotate)
-				if (headingReady) { animateToAnchor(); }
-				else { pendingEntry = true; }
+				if (marker) { engageNav(); }
 			});
 		}
 
 		function exitNav() {
+			navRequested = false;
 			compassOn = false;
+			pendingEntry = false;
 			compass.classList.remove("active", "paused");
 			ringReset();
 			stopFollowing();

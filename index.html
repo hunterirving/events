@@ -23,15 +23,13 @@
 			window.eventsData = fetchJson("resources/events.json")
 				.catch(function () { return fetchJson("resources/demo.json"); });
 		</script>
-		<link rel="stylesheet" href="resources/leaflet/leaflet.css">
+		<link rel="stylesheet" href="resources/maplibre/maplibre-gl.css">
 		<link rel="stylesheet" href="resources/styles.css">
 	</head>
 	<body>
 		<div id="boxes">
 			<div id="left-box">
-				<div id="map-stage">
-					<div id="map-container"></div>
-				</div>
+				<div id="map-container"></div>
 				<div id="compass" aria-hidden="true">
 					<svg viewBox="0 0 40 40" width="40" height="40">
 						<polygon class="needle-n" points="20,5 13,20 27,20"></polygon>

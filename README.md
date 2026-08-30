@@ -25,5 +25,7 @@ this project is licensed under the <a href="LICENSE">GNU General Public License 
 
 the following third-party resources are included in this repo:
 
-- **[Leaflet](https://leafletjs.com)** 1.9.4, <a href="resources/leaflet/LICENSE-leaflet">BSD 2-Clause License</a>
-- **[Leaflet.TileLayer.NoGap](https://github.com/Leaflet/Leaflet.TileLayer.NoGap)** (modified), [Beerware License](resources/leaflet/LICENSE-nogap)
+- **[MapLibre GL JS](https://maplibre.org)** 5.9.0, <a href="resources/maplibre/LICENSE-maplibre">BSD 3-Clause License</a>
+- **[OSM Liberty](https://github.com/maputnik/osm-liberty)** basemap style, <a href="resources/basemap/LICENSE-osm-liberty">BSD 3-Clause License</a> (code) / [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) (design), vendored from [OpenFreeMap](https://github.com/hyperknot/openfreemap)'s fork (<a href="resources/basemap/LICENSE-openfreemap">MIT</a>)
+
+map tiles are served by [OpenFreeMap](https://openfreemap.org) from [OpenStreetMap](https://www.openstreetmap.org/copyright) data.

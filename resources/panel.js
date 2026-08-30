@@ -276,8 +276,7 @@
 	function setActivePin(m) {
 		if (activePin) { activePin.classList.remove("active"); }
 		activePin = null;
-		var icon = m && m._marker && m._marker._icon;
-		var pin = icon && icon.querySelector(".event-pin");
+		var pin = m && m._el && m._el.querySelector(".event-pin");
 		if (pin) { pin.classList.add("active"); activePin = pin; }
 	}
 
@@ -286,7 +285,7 @@
 		currentEvent = m;
 		setActivePin(m);
 		// draw the location->event line (no-op unless nav mode dropped a ladybug)
-		if (window.navLine) { window.navLine.setTarget(L.latLng(m.latitude, m.longitude), m.color); }
+		if (window.navLine) { window.navLine.setTarget({ lat: m.latitude, lng: m.longitude }, m.color); }
 		transitionTo(m.color, function () {
 			var links = buildLinkRows();
 			// description types into its own <p>, then each detail <li> as its own segment
@@ -315,7 +314,7 @@
 	// draws the line to it immediately.
 	window.getActiveEvent = function () {
 		if (!currentEvent) { return null; }
-		return { latlng: L.latLng(currentEvent.latitude, currentEvent.longitude), color: currentEvent.color };
+		return { latlng: { lat: currentEvent.latitude, lng: currentEvent.longitude }, color: currentEvent.color };
 	};
 
 	// Background tap deselects and types the intro back in.
