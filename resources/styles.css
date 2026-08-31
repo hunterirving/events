@@ -254,6 +254,10 @@ html, body {
 	inset: 0;
 }
 
+.maplibregl-canvas-container {
+	isolation: isolate;
+}
+
 .maplibregl-ctrl-attrib.maplibregl-compact {
 	margin: 12px;
 	background: rgba(255, 255, 255, 0.7);
@@ -262,9 +266,15 @@ html, body {
 	box-shadow: 0 1px 3px #00000040;
 	-webkit-tap-highlight-color: transparent;
 }
+/* the standalone status-bar tint band is the real top edge; sit below it */
+@media (display-mode: standalone) {
+	.maplibregl-ctrl-attrib.maplibregl-compact {
+		margin-top: calc(12px + var(--status-tint-h));
+	}
+}
 .maplibregl-ctrl-attrib-button {
 	background-color: transparent;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%237a7f85' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%237a7f85' fill-opacity='0.8' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E");
 }
 
 .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button,
@@ -278,6 +288,19 @@ html, body {
 }
 .maplibregl-ctrl-attrib-button:focus-visible {
 	box-shadow: 0 0 2px 2px #0096ff;
+}
+
+/* mirrors the compass: pad the tap target out to the map corner */
+@media (pointer: coarse) {
+	.maplibregl-ctrl-attrib-button::after {
+		content: "";
+		position: absolute;
+		top: -12px;
+		right: -12px;
+		bottom: 0;
+		left: 0;
+		border-radius: 0 0 0 12px;
+	}
 }
 
 #compass {
