@@ -252,6 +252,8 @@ html, body {
 #map-container {
 	position: absolute;
 	inset: 0;
+	/* rotating the map exposes this past the world's top/bottom edges; matches the basemap water fill */
+	background: rgb(158, 189, 255);
 }
 
 .maplibregl-canvas-container {
