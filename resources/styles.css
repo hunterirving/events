@@ -25,8 +25,8 @@ html, body {
 	display: none;
 }
 /* counteract colored drop shadow on iOS 27 beta status bar */
-@media (display-mode: standalone) {
-	#status-bar-tint {
+@media (display-mode: standalone) and (orientation: portrait) {
+	.is-ios #status-bar-tint {
 		display: block;
 		position: fixed;
 		top: 0;
