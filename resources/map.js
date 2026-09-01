@@ -238,8 +238,6 @@
 		return settle;
 	}
 
-	// Collapses the compact attribution once the style names its sources, then takes
-	// the button over from maplibre so a tap anywhere else can dismiss it.
 	function initAttribution() {
 		var el = map.getContainer().querySelector(".maplibregl-ctrl-attrib");
 		if (!el) { return; }
@@ -247,16 +245,12 @@
 
 		function shown() { return el.classList.contains("maplibregl-compact-show"); }
 
-		// maplibre's own handler pre-flips `open` so the native <details> toggle lands
-		// on the right value; we suppress both, so `open` just tracks the panel
 		function setShown(show) {
 			el.classList.toggle("maplibregl-compact-show", show);
 			if (show) { el.setAttribute("open", ""); } else { el.removeAttribute("open"); }
 		}
 
 		if (button) {
-			// capture on the container beats maplibre's own listener on the button;
-			// preventDefault also keeps the native <details> from double-toggling
 			el.addEventListener("click", function (e) {
 				if (!button.contains(e.target)) { return; }
 				e.preventDefault();
@@ -265,8 +259,6 @@
 			}, true);
 		}
 
-		// anything else on the page dismisses it; capture on the document so a
-		// stopPropagation further in (the event pins do it) can't swallow the tap
 		document.addEventListener("click", function (e) {
 			if (button && button.contains(e.target)) { return; }
 			if (shown()) { setShown(false); }
