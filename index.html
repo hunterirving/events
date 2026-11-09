@@ -23,19 +23,10 @@
 			window.eventsData = fetchJson("resources/events.json")
 				.catch(function () { return fetchJson("resources/demo.json"); });
 		</script>
-		<script>
-			if (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-				(/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)) {
-				document.documentElement.classList.add("is-ios");
-			}
-		</script>
 		<link rel="stylesheet" href="resources/maplibre/maplibre-gl.css">
 		<link rel="stylesheet" href="resources/styles.css">
 	</head>
 	<body>
-		<!-- counteract colored drop shadow on iOS 27 beta status bar -->
-		<div id="status-bar-tint" aria-hidden="true"></div>
-
 		<div id="boxes">
 			<div id="left-box">
 				<div id="map-container"></div>
